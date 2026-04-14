@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
-import App from "./decision-tree-editor";
+import App from "./App";
 import { C } from "./constants";
 
 const darkTheme = createTheme({

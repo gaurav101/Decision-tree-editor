@@ -19,14 +19,14 @@ export function DecisionNode({ data, selected }: NodeProps<NodeData>) {
       }}
     >
       <Handle type="target" position={Position.Top} style={{ background: data.color || C.accent, border: "none", width: 10, height: 10 }} />
-      
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <Typography fontSize={24}>{data.icon || "📦"}</Typography>
         <Typography variant="body2" fontWeight="bold" sx={{ color: data.color || C.accent, letterSpacing: '0.03em' }}>
           {data.label}
         </Typography>
       </Box>
-      
+
       {data.attributes && Object.keys(data.attributes).length > 0 && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
           {Object.entries(data.attributes).slice(0, 3).map(([k, v]) => (
