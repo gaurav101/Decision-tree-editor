@@ -1,28 +1,38 @@
 import { useState, useEffect } from "react";
-import { Drawer, Box, Typography, IconButton, TextField, Button, Divider, Paper } from "@mui/material";
+import { Node } from "reactflow";
+import { Drawer, Box, Typography, IconButton, TextField, Button, Divider } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteForeverRounded";
+import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import SaveIcon from "@mui/icons-material/Save";
-import { C } from "../constants";
+import { C, NodeData } from "../constants";
 
 const COLORS = [C.accent, C.green, C.amber, C.red, "#b57bee", "#f76eb4"];
 
-export function EditPanel({ node, onSave, onClose, onDelete }) {
-  const [label, setLabel] = useState(node?.data?.label || "");
-  const [icon, setIcon] = useState(node?.data?.icon || "📦");
-  const [color, setColor] = useState(node?.data?.color || C.accent);
-  const [attrs, setAttrs] = useState(Object.entries(node?.data?.attributes || {}));
+export interface EditPanelProps {
+  node: Node<NodeData>;
+  onSave: (node: Node<NodeData>) => void;
+  onClose: () => void;
+  onDelete: (id: string) => void;
+}
+
+export function EditPanel({ node, onSave, onClose, onDelete }: EditPanelProps) {
+  const [label, setLabel] = useState<string>(node.data?.label || "");
+  const [icon, setIcon] = useState<string>(node.data?.icon || "📦");
+  const [color, setColor] = useState<string>(node.data?.color || C.accent);
+  const [attrs, setAttrs] = useState<[string, string][]>(Object.entries(node.data?.attributes || {}));
 
   useEffect(() => {
-    setLabel(node?.data?.label || "");
-    setIcon(node?.data?.icon || "📦");
-    setColor(node?.data?.color || C.accent);
-    setAttrs(Object.entries(node?.data?.attributes || {}));
-  }, [node?.id]);
+    if (node) {
+      setLabel(node.data?.label || "");
+      setIcon(node.data?.icon || "📦");
+      setColor(node.data?.color || C.accent);
+      setAttrs(Object.entries(node.data?.attributes || {}));
+    }
+  }, [node]);
 
-  const updateAttr = (i, field, val) => {
-    const next = [...attrs];
+  const updateAttr = (i: number, field: 0 | 1, val: string) => {
+    const next = [...attrs] as [string, string][];
     next[i] = field === 0 ? [val, next[i][1]] : [next[i][0], val];
     setAttrs(next);
   };
@@ -36,7 +46,7 @@ export function EditPanel({ node, onSave, onClose, onDelete }) {
         icon,
         color,
         colorSoft: color + "22",
-        attributes: Object.fromEntries(attrs.filter(([k]) => k.trim())),
+        attributes: Object.fromEntries(attrs.filter(([k]) => k.trim() !== "")),
       },
     });
   };
@@ -69,7 +79,7 @@ export function EditPanel({ node, onSave, onClose, onDelete }) {
           onChange={e => setLabel(e.target.value)}
           variant="outlined"
         />
-
+        
         <TextField
           label="Icon (Emoji)"
           size="small"
@@ -119,7 +129,7 @@ export function EditPanel({ node, onSave, onClose, onDelete }) {
               Add
             </Button>
           </Box>
-
+          
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {attrs.map(([k, v], i) => (
               <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -165,7 +175,7 @@ export function EditPanel({ node, onSave, onClose, onDelete }) {
             color="error"
             fullWidth
             onClick={() => onDelete(node.id)}
-            startIcon={<DeleteOutlineIcon />}
+            startIcon={<DeleteForeverRoundedIcon />}
           >
             Delete Node
           </Button>

@@ -1,3 +1,20 @@
+export interface NodeAttributes {
+  [key: string]: string;
+}
+
+export interface NodeData {
+  label: string;
+  icon: string;
+  color: string;
+  colorSoft: string;
+  attributes: NodeAttributes;
+  children?: TreeNode[];
+}
+
+export interface TreeNode extends NodeData {
+  id: string;
+}
+
 export const C = {
   bg: "#0d0f14",
   panel: "#13161e",
@@ -16,7 +33,7 @@ export const C = {
   border: "#252b3b",
 };
 
-export const TREES = {
+export const TREES: Record<string, TreeNode> = {
   "Customer Support": {
     id: "root-cs",
     label: "Customer Support",

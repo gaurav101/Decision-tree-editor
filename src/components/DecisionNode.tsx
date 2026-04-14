@@ -1,8 +1,8 @@
-import { Handle, Position } from "reactflow";
+import { Handle, Position, NodeProps } from "reactflow";
 import { Box, Typography, Chip, Paper } from "@mui/material";
-import { C } from "../constants";
+import { C, NodeData } from "../constants";
 
-export function DecisionNode({ data, selected }) {
+export function DecisionNode({ data, selected }: NodeProps<NodeData>) {
   return (
     <Paper
       elevation={selected ? 8 : 2}

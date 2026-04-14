@@ -1,11 +1,19 @@
-import { C } from './constants';
+import { Node, Edge } from "reactflow";
+import { C, TreeNode, NodeData } from "./constants";
 
 let nodeIdCounter = 1000;
-export const genId = () => `n-${++nodeIdCounter}`;
+export const genId = (): string => `n-${++nodeIdCounter}`;
 
-export function treeToFlow(node, x = 0, y = 0, parentId = null, edges = [], depth = 0) {
-  const nodes = [];
-  const flowNode = {
+export function treeToFlow(
+  node: TreeNode,
+  x = 0,
+  y = 0,
+  parentId: string | null = null,
+  edges: Edge[] = [],
+  depth = 0
+): Node<NodeData>[] {
+  const nodes: Node<NodeData>[] = [];
+  const flowNode: Node<NodeData> = {
     id: node.id,
     type: "decisionNode",
     position: { x, y },
@@ -24,8 +32,9 @@ export function treeToFlow(node, x = 0, y = 0, parentId = null, edges = [], dept
   }
   const childSpacing = 280;
   const verticalGap = 160;
-  const totalWidth = (node.children?.length - 1) * childSpacing;
-  node.children?.forEach((child, i) => {
+  const totalWidth = ((node.children?.length ?? 1) - 1) * childSpacing;
+  
+  node.children?.forEach((child: TreeNode, i: number) => {
     const cx = x - totalWidth / 2 + i * childSpacing;
     const cy = y + verticalGap;
     const childNodes = treeToFlow(child, cx, cy, node.id, edges, depth + 1);

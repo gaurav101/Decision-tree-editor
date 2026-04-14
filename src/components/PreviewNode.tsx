@@ -3,10 +3,17 @@ import { Box, Paper, Typography, Button, Collapse, Chip } from "@mui/material";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { TreeNode } from "../constants";
 
-export function PreviewNode({ node, onNavigate, depth = 0 }) {
+export interface PreviewNodeProps {
+  node: TreeNode;
+  onNavigate: (node: TreeNode) => void;
+  depth?: number;
+}
+
+export function PreviewNode({ node, onNavigate, depth = 0 }: PreviewNodeProps) {
   const [expanded, setExpanded] = useState(depth < 1);
-  const hasChildren = node.children && node.children.length > 0;
+  const hasChildren = (node.children?.length ?? 0) > 0;
 
   return (
     <Box sx={{ ml: depth * 3, mt: 1.5 }}>

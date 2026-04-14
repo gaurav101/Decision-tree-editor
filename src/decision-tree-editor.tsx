@@ -6,6 +6,9 @@ import ReactFlow, {
   Background,
   useNodesState,
   useEdgesState,
+  Node,
+  Edge,
+  Connection
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { Box, Drawer, Typography, Toolbar, Button, Paper, ToggleButtonGroup, ToggleButton } from "@mui/material";
@@ -14,7 +17,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-import { C, TREES } from "./constants";
+import { C, TREES, NodeData, TreeNode } from "./constants";
 import { genId, treeToFlow } from "./utils";
 import { DecisionNode } from "./components/DecisionNode";
 import { PreviewNode } from "./components/PreviewNode";
@@ -24,39 +27,39 @@ const nodeTypes = { decisionNode: DecisionNode };
 const drawerWidth = 260;
 
 export default function App() {
-  const [selectedTree, setSelectedTree] = useState(null);
-  const [mode, setMode] = useState("editor"); // "editor" | "preview"
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [selectedTree, setSelectedTree] = useState<string | null>(null);
+  const [mode, setMode] = useState<"editor" | "preview">("editor");
+  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNode, setSelectedNode] = useState(null);
-  const [treeData, setTreeData] = useState(null);
-  const [previewRoot, setPreviewRoot] = useState(null);
+  const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
+  const [treeData, setTreeData] = useState<TreeNode | null>(null);
+  const [previewRoot, setPreviewRoot] = useState<TreeNode | null>(null);
 
-  const loadTree = (treeName) => {
+  const loadTree = (treeName: string) => {
     const tree = TREES[treeName];
     if (!tree) return;
     setSelectedTree(treeName);
     setTreeData(JSON.parse(JSON.stringify(tree)));
     setPreviewRoot(null);
     setSelectedNode(null);
-    const edgesArr = [];
+    const edgesArr: Edge[] = [];
     const flowNodes = treeToFlow(tree, 0, 0, null, edgesArr);
     setNodes(flowNodes);
     setEdges(edgesArr);
   };
 
-  const onConnect = useCallback((params) => {
+  const onConnect = useCallback((params: Edge | Connection) => {
     setEdges(eds => addEdge({ ...params, style: { stroke: C.border, strokeWidth: 2 } }, eds));
   }, [setEdges]);
 
-  const onNodeClick = useCallback((_, node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node<NodeData>) => {
     setSelectedNode(node);
   }, []);
 
   const addChildNode = () => {
     if (!selectedNode) return;
     const newId = genId();
-    const newNode = {
+    const newNode: Node<NodeData> = {
       id: newId,
       type: "decisionNode",
       position: { x: selectedNode.position.x + 20, y: selectedNode.position.y + 160 },
@@ -68,46 +71,49 @@ export default function App() {
         attributes: {},
       },
     };
-    const newEdge = {
+    const newEdge: Edge = {
       id: `e-${selectedNode.id}-${newId}`,
       source: selectedNode.id,
       target: newId,
       style: { stroke: C.border, strokeWidth: 2 },
     };
-    setNodes(ns => [...ns, newNode]);
+    setNodes(ns => [...ns, newNode] as Node<NodeData>[]);
     setEdges(es => [...es, newEdge]);
     setSelectedNode(newNode);
   };
 
   const addRootNode = () => {
     const newId = genId();
-    const newNode = {
+    const newNode: Node<NodeData> = {
       id: newId,
       type: "decisionNode",
       position: { x: Math.random() * 400, y: Math.random() * 200 },
       data: { label: "New Root", icon: "🌱", color: C.green, colorSoft: C.greenSoft, attributes: {} },
     };
-    setNodes(ns => [...ns, newNode]);
+    setNodes(ns => [...ns, newNode] as Node<NodeData>[]);
     setSelectedNode(newNode);
   };
 
-  const saveNode = (updatedNode) => {
-    setNodes(ns => ns.map(n => n.id === updatedNode.id ? updatedNode : n));
+  const saveNode = (updatedNode: Node<NodeData>) => {
+    setNodes(ns => ns.map(n => n.id === updatedNode.id ? updatedNode : n) as Node<NodeData>[]);
     setSelectedNode(updatedNode);
   };
 
-  const deleteNode = (nodeId) => {
-    setNodes(ns => ns.filter(n => n.id !== nodeId));
+  const deleteNode = (nodeId: string) => {
+    setNodes(ns => ns.filter(n => n.id !== nodeId) as Node<NodeData>[]);
     setEdges(es => es.filter(e => e.source !== nodeId && e.target !== nodeId));
     setSelectedNode(null);
   };
 
-  const buildTreeFromFlow = () => {
-    const nodeMap = {};
+  const buildTreeFromFlow = (): TreeNode[] => {
+    const nodeMap: Record<string, TreeNode> = {};
     nodes.forEach(n => { nodeMap[n.id] = { ...n.data, id: n.id, children: [] }; });
     edges.forEach(e => {
       if (nodeMap[e.source] && nodeMap[e.target]) {
-        nodeMap[e.source].children.push(nodeMap[e.target]);
+        if (!nodeMap[e.source].children) {
+          nodeMap[e.source].children = [];
+        }
+        nodeMap[e.source].children!.push(nodeMap[e.target]);
       }
     });
     const childIds = new Set(edges.map(e => e.target));
@@ -119,7 +125,7 @@ export default function App() {
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      
+
       {/* ── Left Panel ───────────────────────────────────────────────────────── */}
       <Drawer
         variant="permanent"
@@ -138,7 +144,7 @@ export default function App() {
           <ToggleButtonGroup
             value={mode}
             exclusive
-            onChange={(_, newMode) => newMode && setMode(newMode)}
+            onChange={(_, newMode) => newMode && setMode(newMode as "editor" | "preview")}
             fullWidth
             size="small"
             sx={{ mb: 2 }}
@@ -154,7 +160,7 @@ export default function App() {
           <Typography variant="caption" color="text.secondary" fontWeight="bold" mb={1} display="block" letterSpacing={1}>
             ROOT NODES
           </Typography>
-          
+
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {Object.entries(TREES).map(([name, tree]) => {
               const isSelected = selectedTree === name;
@@ -230,7 +236,7 @@ export default function App() {
           )}
 
           <Box sx={{ flexGrow: 1 }} />
-          
+
           {mode === "preview" && previewRoot && (
             <Button
               size="small"
@@ -246,7 +252,7 @@ export default function App() {
         <Box sx={{ flexGrow: 1, position: 'relative' }}>
           {mode === "editor" ? (
             selectedTree ? (
-               <Box sx={{ width: `calc(100% - ${editorRightPad}px)`, height: "100%", transition: "width 0.2s" }}>
+              <Box sx={{ width: `calc(100% - ${editorRightPad}px)`, height: "100%", transition: "width 0.2s" }}>
                 <ReactFlow
                   nodes={nodes}
                   edges={edges}
@@ -264,13 +270,13 @@ export default function App() {
               </Box>
             ) : (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                 <Typography color="text.secondary">Select a root node from the left panel to start editing</Typography>
+                <Typography color="text.secondary">Select a root node from the left panel to start editing</Typography>
               </Box>
             )
           ) : (
-             <Box sx={{ p: 4, height: '100%', overflowY: 'auto' }}>
+            <Box sx={{ p: 4, height: '100%', overflowY: 'auto' }}>
               {!selectedTree ? (
-                 <Typography align="center" color="text.secondary" mt={8}>Select a root node from the left panel</Typography>
+                <Typography align="center" color="text.secondary" mt={8}>Select a root node from the left panel</Typography>
               ) : previewRoot ? (
                 <Box>
                   <Typography variant="caption" color="text.secondary" mb={2} display="block">
@@ -279,14 +285,14 @@ export default function App() {
                   <PreviewNode node={previewRoot} onNavigate={setPreviewRoot} depth={0} />
                 </Box>
               ) : (
-                 <Box>
-                   <Typography variant="caption" color="text.secondary" mb={2} display="block" letterSpacing={1}>
-                     TREE OVERVIEW • {selectedTree}
-                   </Typography>
-                   {roots.map(root => (
-                     <PreviewNode key={root.id} node={root} onNavigate={setPreviewRoot} depth={0} />
-                   ))}
-                 </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" mb={2} display="block" letterSpacing={1}>
+                    TREE OVERVIEW • {selectedTree}
+                  </Typography>
+                  {roots.map(root => (
+                    <PreviewNode key={root.id} node={root} onNavigate={setPreviewRoot} depth={0} />
+                  ))}
+                </Box>
               )}
             </Box>
           )}
