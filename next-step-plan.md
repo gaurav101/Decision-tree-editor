@@ -7,13 +7,16 @@ React Flow nodes don't physically "nest" in the data array; they are positioned 
 
 The Input JSON
 JSON
+
+```javascript
 [
   { "id": "1", "name": "Root", "parentId": null },
   { "id": "2", "name": "Child A", "parentId": "1" },
   { "id": "3", "name": "Child B", "parentId": "1" }
 ]
+```
 The Logic
-JavaScript
+```javascript
 const transformToFlow = (data) => {
   const nodes = [];
   const edges = [];
@@ -39,12 +42,13 @@ const transformToFlow = (data) => {
 
   return { nodes, edges };
 };
+```
 
 2. Converting Back to JSON Array
 When the user adds a node or edge in React Flow, you need to reconstruct your original format. The key here is looking at the Edges to determine the parentId.
 
 The Logic
-JavaScript
+```javascript
 const transformToJSON = (nodes, edges) => {
   return nodes.map((node) => {
     // Find the edge where this node is the target to identify the parent
@@ -57,6 +61,8 @@ const transformToJSON = (nodes, edges) => {
     };
   });
 };
+```
+
 
 3. Best Practices for Tree Layouts
 React Flow doesn't automatically position nodes in a tree structure. For a professional "tree" look, I recommend using the Dagre library alongside the functions above.
@@ -78,7 +84,7 @@ First, install the library: npm install dagre
 1. The Tree Layout Utility
 This function takes your raw nodes and edges, calculates their positions using a directed graph algorithm, and returns the "positioned" elements for React Flow.
 
-JavaScript
+```javascript
 import dagre from 'dagre';
 
 const nodeWidth = 172;
@@ -115,10 +121,13 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 
   return { nodes: layoutedNodes, edges };
 };
+```
+
+
 2. Integration in your Component
 You will use the conversion logic from before, but pass the result through the layout engine before setting your state.
 
-JavaScript
+```javascript
 import React, { useCallback } from 'react';
 import ReactFlow, { useNodesState, useEdgesState, addEdge } from 'reactflow';
 
@@ -154,6 +163,8 @@ const InitialTree = ({ initialData }) => {
     </div>
   );
 };
+```
+
 Key Takeaways for Symmetrical Trees
 Rankdir: Use 'TB' for a vertical family tree or 'LR' for a horizontal mind map.
 
@@ -170,7 +181,7 @@ Here is the refined, complete implementation tailored for this scale.
 1. The Conversion Logic (Optimized)
 We'll use a Map for the reverse conversion. This ensures that even with 1,000+ nodes, the "save" action remains instantaneous.
 
-JavaScript
+```javascript
 // Convert flat JSON to React Flow format
 export const transformToFlow = (data) => {
   const nodes = data.map((item) => ({
@@ -201,10 +212,12 @@ export const transformToJSON = (nodes, edges) => {
     parentId: edgeMap.get(node.id) || null,
   }));
 };
+```
+
 2. The Symmetrical Layout (Dagre)
 For 5 branches, we need enough horizontal "breathing room" (nodesep) so the lines don't look like a spiderweb.
 
-JavaScript
+```javascript
 import dagre from 'dagre';
 
 export const getLayoutedElements = (nodes, edges) => {
@@ -226,10 +239,12 @@ export const getLayoutedElements = (nodes, edges) => {
     return { ...node, position: { x: x - 75, y: y - 20 } };
   });
 };
+```
+
 3. Implementation with Auto-Layout
 This component will automatically arrange the tree whenever the data loads or a new node is added.
 
-JavaScript
+```javascript
 import React, { useCallback, useEffect } from 'react';
 import ReactFlow, { 
   useNodesState, 
@@ -288,6 +303,8 @@ const TreeGraph = ({ rawData }) => {
     </div>
   );
 };
+```
+
 Why this works for your specific constraints:
 Symmetry: Dagre calculates the center-point of the 5 branches and aligns the parent directly above them.
 
@@ -297,6 +314,8 @@ Smooth Transitions: Using type: 'smoothstep' for edges helps the eye follow path
 
 * function to programmatically add a child node so you don't have to drag edges manually?
 To make this work seamlessly, the "Add Child" function needs to do three things: generate a unique ID, create the node, and immediately create the edge that links it to its parent.Here is the logic to add a child node programmatically and then refresh the layout so the new node snaps into its symmetrical position.1. The Add Child FunctionYou can trigger this from a button inside a custom node or a global UI button.JavaScriptimport { v4 as uuidv4 } from 'uuid'; // Recommended for unique IDs
+
+```javascript
 
 const addChildNode = (parentId) => {
   const newNodeId = uuidv4();
@@ -329,7 +348,12 @@ const addChildNode = (parentId) => {
     return getLayoutedElements(nds.concat(newNode), edges.concat(newEdge));
   });
 };
-2. Implementation with a "Layout Refresh"Since adding a node shifts the whole tree (to keep it symmetrical), it's best to wrap the layout logic in a useCallback so you can call it whenever the structure changes.JavaScriptconst onAddChild = useCallback((parentId) => {
+```
+
+2. Implementation with a "Layout Refresh"Since adding a node shifts the whole tree (to keep it symmetrical), it's best to wrap the layout logic in a useCallback so you can call it whenever the structurechanges.
+
+```javascript
+const onAddChild = useCallback((parentId) => {
   const newNodeId = `node-${Date.now()}`; // Simple ID generation
   const newNode = {
     id: newNodeId,
@@ -353,8 +377,12 @@ const addChildNode = (parentId) => {
   setNodes(layoutedNodes);
   setEdges(updatedEdges);
 }, [nodes, edges]);
+
+```
+
 3. Adding the "Add" Button to NodesTo make this user-friendly, you should use a Custom Node. This puts the "+" button directly on the parent.CustomNode.jsJavaScriptimport { Handle, Position } from 'reactflow';
 
+```
 const CustomNode = ({ id, data }) => {
   return (
     <div style={{ 
@@ -379,9 +407,13 @@ const CustomNode = ({ id, data }) => {
     </div>
   );
 };
+```
 
 export default CustomNode;
-4. Wiring it up in the Main ComponentWhen you transform your JSON to nodes, inject the onAdd function into the node's data object.JavaScriptconst nodeTypes = { treeNode: CustomNode };
+4. Wiring it up in the Main ComponentWhen you transform your JSON to nodes, inject the onAdd function into the node's data object.
+
+```javascript
+const nodeTypes = { treeNode: CustomNode };
 
 // Inside your main component:
 const { nodes: initialNodes, edges: initialEdges } = transformToFlow(rawData);
@@ -394,6 +426,10 @@ const nodesWithAction = initialNodes.map(node => ({
     onAdd: onAddChild // Pass the function here
   }
 }));
+
+```
+
+
 Summary of WorkflowInitial Load: JSON Array $\rightarrow$ transformToFlow $\rightarrow$ getLayoutedElements $\rightarrow$ Display.Add Action: Click button $\rightarrow$ Create Node/Edge $\rightarrow$ getLayoutedElements $\rightarrow$ Tree shifts symmetrically.Export: Click Save $\rightarrow$ transformToJSON $\rightarrow$ Clean JSON Array for DB.
 
 
