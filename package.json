@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "vite"
+    "build": "vite build"
   },
   "author": "gaurav and Ai",
   "license": "ISC",
